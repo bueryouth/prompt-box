@@ -52,12 +52,20 @@
 ## 截图预览
 
 ### 主界面
-![主界面截图](https://example.com/main-interface.png)
+[![主页面.png](https://imgtu.com/uploads/moz19bti/t-screenshot_2025-10-24_165508_710.webp)](https://imgtu.com/upload/moz19bti/screenshot_2025-10-24_165508_710)
 
 ### 编辑提示词
-![编辑界面截图](https://example.com/edit-interface.png)
+[![编辑界面截图.png](https://imgtu.com/uploads/mp3vcy0u/t-screenshot_2025-10-24_165528_788.webp)](https://imgtu.com/upload/mp3vcy0u/screenshot_2025-10-24_165528_788)
 
 ## 版本历史
+
+### v2.2.0
+- 添加提示词复制功能
+- 优化搜索功能，支持更快速的提示词查找
+- 添加提示词搜索功能
+- 添加提示词导入导出功能
+- 添加提示词分类功能
+- 优化界面布局，提升用户体验
 
 ### v2.1.0
 - 优化提示词显示，处理换行问题，使内容中的换行符正确显示为HTML换行
@@ -71,7 +79,6 @@
 ## 反馈与建议
 如在使用过程中遇到任何问题或有功能建议，请联系：
 - GitHub: [提交Issue](https://github.com/bueryouth/prompt-box/issues)
-- 邮箱: example@example.com
 
 ## 开源许可
 本项目采用MIT许可证 - 详情参见LICENSE文件
