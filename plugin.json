@@ -1,0 +1,27 @@
+{
+    "main": "index.html",
+    "preload": "preload/services.js",
+    "logo": "logo.png",
+    "features": [
+        {
+            "code": "prompt",
+            "explain": "提示词管理工具",
+            "cmds": [
+                "提示词",
+                "prompt",
+                "提示词管理"
+            ]
+        }
+    ],
+    "platform": [
+        "win32",
+        "darwin",
+        "linux"
+    ],
+    "name": "z4icwdpk",
+    "pluginName": "prompt-box",
+    "description": "现代化提示词管理工具，支持在线同步、本地导入导出、标签分类和一键搜索。",
+    "author": "BuerYouth",
+    "homepage": null,
+    "version": "2.0.0"
+}
