@@ -18,10 +18,13 @@ class PromptBoxApp {
       // 标签过滤
       const tagMatch = !this.filterTag || (prompt.tags && prompt.tags.includes(this.filterTag));
       // 搜索词过滤
-      const searchMatch = !this.searchQuery || 
-        prompt.title.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+      const searchMatch = !this.searchQuery ||
+        prompt.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
         prompt.content.toLowerCase().includes(this.searchQuery.toLowerCase());
-      return tagMatch && searchMatch;
+      // 来源过滤
+      // 根据分类自动筛选来源
+      const sourceMatch = prompt.source === this.selectedCategory;
+      return tagMatch && searchMatch && sourceMatch;
     });
   }
 
@@ -37,20 +40,19 @@ class PromptBoxApp {
 
   loadLocalPrompts() {
     try {
-      const saved = localStorage.getItem('localPrompts');
-      if (saved) {
-        try {
-          this.prompts.local = JSON.parse(saved);
-        } catch (e) {
-          console.error('解析本地提示词失败，使用默认数据:', e);
-          this.prompts.local = [];
-          localStorage.removeItem('localPrompts'); // 清除损坏数据
-        }
-      } else {
-        this.prompts.local = [];
-      }
+      const data = localStorage.getItem('localPrompts');
+      this.prompts.local = data ? JSON.parse(data) : [];
+      // 确保每个提示词都有必要的字段
+      this.prompts.local = this.prompts.local.map(prompt => ({
+        ...prompt,
+        id: prompt.id || `local_${Date.now()}`,
+        createdAt: prompt.createdAt || Date.now(),
+        updatedAt: prompt.updatedAt || Date.now(),
+        source: 'local'
+      }));
     } catch (e) {
       console.error('加载本地提示词失败:', e);
+      this.prompts.local = [];
     }
   }
 
@@ -99,7 +101,7 @@ class PromptBoxApp {
   renderPrompts() {
     const promptList = document.querySelector('.prompt-list');
     let promptsToShow = this.prompts[this.selectedCategory];
-    
+
     // 应用搜索和标签过滤
     promptsToShow = this.filterPrompts(promptsToShow);
 
@@ -107,8 +109,8 @@ class PromptBoxApp {
       promptList.innerHTML = `
         <div class="empty-state">
           <p>暂无提示词</p>
-          ${this.selectedCategory === 'local' ? 
-            '<button id="addFirstPrompt" class="btn btn-primary">添加第一个提示词</button>' : ''}
+          ${this.selectedCategory === 'local' ?
+          '<button id="addFirstPrompt" class="btn btn-primary">添加第一个提示词</button>' : ''}
         </div>
       `;
     } else {
@@ -120,8 +122,8 @@ class PromptBoxApp {
               <h3 class="prompt-title">${prompt.title}</h3>
               ${this.selectedCategory === 'local' ? `
                 <div class="prompt-actions">
-                  <button class="action-btn edit-btn" title="编辑">编辑</button>
-                  <button class="action-btn delete-btn" title="删除">删除</button>
+                  <button class="action-btn edit-btn" style="color: var(--primary-color);" title="编辑">编辑</button>
+                  <button class="action-btn delete-btn" style="color: var(--danger-color);" title="删除">删除</button>
                 </div>
               ` : ''}
             </div>
@@ -145,9 +147,11 @@ class PromptBoxApp {
   renderTags() {
     const tagList = document.querySelector('.tag-list');
     this.tags.clear();
-    
-    // 收集所有标签
-    [...this.prompts.local, ...this.prompts.online].forEach(prompt => {
+
+    // 根据选中来源收集标签
+    // 根据选中分类收集标签
+    const promptsToTag = this.prompts[this.selectedCategory];
+    promptsToTag.forEach(prompt => {
       if (prompt.tags) {
         prompt.tags.forEach(tag => this.tags.add(tag));
       }
@@ -192,6 +196,8 @@ class PromptBoxApp {
       }
     });
 
+
+
     // 提示词卡片点击事件
     document.querySelector('.prompt-list').addEventListener('click', (e) => {
       const card = e.target.closest('.prompt-card');
@@ -199,7 +205,7 @@ class PromptBoxApp {
 
       const promptId = card.dataset.id;
       const prompt = [...this.prompts.local, ...this.prompts.online].find(p => p.id === promptId);
-      
+
       if (e.target.closest('.copy-btn')) {
         this.copyToClipboard(prompt.content);
       } else if (e.target.closest('.search-btn')) {
@@ -225,6 +231,7 @@ class PromptBoxApp {
 
     // 添加按钮
     document.getElementById('addPromptBtn').addEventListener('click', () => {
+      debugger
       this.addNewPrompt();
     });
 
@@ -265,12 +272,13 @@ class PromptBoxApp {
 
   addNewPrompt() {
     const prompt = {
-      id: `local_${Date.now()}`,
+      id: `local_${Date.now()}`, // 仅使用local_加上时间戳作为ID
       title: '新提示词',
-      content: '请输入提示词内容...',
+      content: '请输入提示词内容……',
       tags: [],
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      isNew: true // 添加标记区分新增和编辑
     };
     this.editPrompt(prompt);
   }
@@ -287,40 +295,9 @@ class PromptBoxApp {
     contentTextarea.value = prompt.content;
     tagsInput.value = prompt.tags ? prompt.tags.join(', ') : '';
 
+    // 保存当前编辑的提示词引用
+    this.currentEditingPrompt = prompt;
     modal.classList.remove('hidden');
-
-    // 保存按钮事件
-    const handleSave = () => {
-      const title = titleInput.value.trim();
-      const content = contentTextarea.value.trim();
-      const tags = tagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-
-      if (!title || !content) {
-        this.showNotification('标题和内容不能为空', 'error');
-        return;
-      }
-
-      const updatedPrompt = {
-        ...prompt,
-        title,
-        content,
-        tags,
-        updatedAt: Date.now()
-      };
-
-      // 如果是新提示词，则添加到列表
-      const index = this.prompts.local.findIndex(p => p.id === prompt.id);
-      if (index >= 0) {
-        this.prompts.local[index] = updatedPrompt;
-      } else {
-        this.prompts.local.push(updatedPrompt);
-      }
-
-      this.saveLocalPrompts();
-      this.render();
-      modal.classList.add('hidden');
-      this.showNotification('提示词已保存');
-    };
 
     // 删除按钮事件
     const handleDelete = () => {
@@ -334,20 +311,70 @@ class PromptBoxApp {
     };
 
     // 清理之前的事件监听器
-    saveBtn.removeEventListener('click', handleSave);
+    saveBtn.removeEventListener('click', this.handleSave);
     deleteBtn.removeEventListener('click', handleDelete);
-    
+
     // 添加新的事件监听器
-    saveBtn.addEventListener('click', handleSave);
+    saveBtn.addEventListener('click', this.handleSave);
     deleteBtn.addEventListener('click', handleDelete);
 
-    // 关闭模态框
-    document.getElementById('closeModal').addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
+    // 关闭模态框 - 使用类方法确保引用一致
+    document.getElementById('closeModal').removeEventListener('click', this.handleCloseModal);
+    document.getElementById('closeModal').addEventListener('click', this.handleCloseModal);
   }
 
-  deletePrompt(promptId) {
+  // 关闭模态框处理函数
+  handleCloseModal = () => {
+    const modal = document.getElementById('editModal');
+    modal.classList.add('hidden');
+  }
+
+  // 保存提示词处理函数 - 定义为类方法确保引用一致
+  handleSave = async () => {
+    const title = document.getElementById('editTitle').value.trim();
+    const content = document.getElementById('editContent').value.trim();
+    const tags = document.getElementById('editTags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+    const prompt = this.currentEditingPrompt; // 需要在editPrompt中设置this.currentEditingPrompt
+
+    if (!title || !content) {
+      this.showNotification('标题和内容不能为空', 'error');
+      return;
+    }
+
+    const updatedPrompt = {
+      ...prompt,
+      title,
+      content,
+      tags,
+      updatedAt: Date.now()
+    };
+
+    // 创建最终保存的提示词对象，移除isNew标记
+    const finalPrompt = { ...updatedPrompt };
+    if (finalPrompt.isNew) delete finalPrompt.isNew;
+
+    // 根据是否为新增提示词采用不同处理逻辑
+    if (prompt.isNew) {
+      // 重新设置ID，确保唯一
+      finalPrompt.id = `local_${Date.now()}`;
+      // 新增提示词，直接添加到列表
+      this.prompts.local.push(finalPrompt);
+    } else {
+      // 编辑已有提示词，先移除旧数据再添加更新后的数据
+      this.prompts.local = this.prompts.local.filter(p => p.id !== prompt.id);
+      this.prompts.local.push(finalPrompt);
+    }
+    // 按创建时间排序
+    this.prompts.local.sort((a, b) => b.createdAt - a.createdAt);
+    this.saveLocalPrompts();
+    // 重新加载数据确保一致性
+    await this.loadLocalPrompts();
+    this.render();
+    document.getElementById('editModal').classList.add('hidden');
+    this.showNotification('提示词已保存');
+  }
+
+  async deletePrompt(promptId) {
     if (confirm('确定要删除这个提示词吗？')) {
       this.prompts.local = this.prompts.local.filter(p => p.id !== promptId);
       this.saveLocalPrompts();
@@ -365,10 +392,10 @@ class PromptBoxApp {
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         try {
           const importedPrompts = JSON.parse(event.target.result);
-          
+
           // 验证数据格式
           if (!Array.isArray(importedPrompts)) {
             throw new Error('无效的JSON格式：必须是提示词数组');
@@ -383,7 +410,7 @@ class PromptBoxApp {
           }));
 
           this.prompts.local.push(...newPrompts);
-          this.saveLocalPrompts();
+          await this.saveLocalPrompts();
           this.render();
           this.showNotification(`成功导入 ${newPrompts.length} 个提示词`);
         } catch (error) {
@@ -403,7 +430,7 @@ class PromptBoxApp {
     }
 
     const dataStr = JSON.stringify(this.prompts.local, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
 
     const exportFileName = `prompt-box-export-${new Date().toISOString().split('T')[0]}.json`;
 

@@ -10,7 +10,8 @@
                 "提示词",
                 "prompt",
                 "提示词管理"
-            ]
+            ],
+            "mainPush": true
         }
     ],
     "platform": [

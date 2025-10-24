@@ -42,7 +42,7 @@ body {
   background-color: transparent;
   border-radius: 0;
   box-shadow: none;
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   overflow: hidden;
   display: flex;
@@ -103,11 +103,16 @@ body {
 
 /* 侧边栏 */
 .sidebar {
-  width: 280px;
+  flex: 0 0 280px;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   padding: 20px;
   overflow-y: auto;
+  transition: flex-basis 0.3s ease;
+}
+
+.fullscreen .sidebar {
+  flex: 0 0 320px;
 }
 
 .sidebar-section {
@@ -441,11 +446,16 @@ body {
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   width: 90%;
-  max-width: 600px;
+  max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
   transform: scale(0.9);
   transition: var(--transition);
+}
+
+.fullscreen .modal-content {
+  max-width: 90%;
+  max-height: 95vh;
 }
 
 .modal:not(.hidden) .modal-content {
