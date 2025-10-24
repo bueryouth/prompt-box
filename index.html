@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提示词盒子 | Prompt Box</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="app-title">提示词盒子</h1>
+            <div class="header-actions">
+          <div class="search-container">
+            <input type="text" id="searchInput" placeholder="搜索提示词...">
+          </div>
+                <button id="refreshBtn" class="header-btn" title="刷新在线提示词">
+                    <span class="btn-text">刷新</span>
+                </button>
+                <button id="importBtn" class="header-btn" title="导入提示词">
+                    <span class="btn-text">导入</span>
+                </button>
+                <button id="exportBtn" class="header-btn" title="导出提示词">
+                    <span class="btn-text">导出</span>
+                </button>
+                <button id="addPromptBtn" class="btn btn-primary">
+                    添加提示词
+                </button>
+            </div>
+        </header>
+
+        <div class="app-content">
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h2 class="section-title">分类</h2>
+                    <div class="categories"></div>
+                </div>
+                <div class="sidebar-section">
+                    <h2 class="section-title">标签</h2>
+                    <div class="tag-list"></div>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="prompt-list"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 编辑提示词模态框 -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>编辑提示词</h2>
+                <button id="closeModal" class="close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="editTitle">标题</label>
+                    <input type="text" id="editTitle" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="editContent">内容</label>
+                    <textarea id="editContent" class="form-textarea" rows="10"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editTags">标签（用逗号分隔）</label>
+                    <input type="text" id="editTags" class="form-input">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="deletePromptBtn" class="btn btn-danger">删除</button>
+                <button id="savePromptBtn" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/app.js"></script>
+</body>
+</html>
